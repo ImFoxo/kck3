@@ -1,0 +1,35 @@
+﻿@model IEnumerable<Biblioteka.Models.Tag>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Tagi</h1>
+
+<p>
+    <a asp-action="Create" class="customButton">Dodaj</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.tagName)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.tagName)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.tagId"class="customButton">Edytuj</a> |
+                <a asp-action="Details" asp-route-id="@item.tagId"class="customButton">Detale</a> |
+                <a asp-action="Delete" asp-route-id="@item.tagId"class="customButton">Usuń</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

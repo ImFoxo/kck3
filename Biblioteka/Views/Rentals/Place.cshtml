@@ -1,0 +1,67 @@
+﻿@model Biblioteka.Models.Rental
+
+@{
+    ViewData["Title"] = "Złóż zamówienie";
+    var bookList = (List<SelectListItem>)ViewData["bookList"];
+}
+
+<h1>Złóż zamówienie</h1>
+
+<h4>Rental</h4>
+<hr />
+@if (User.IsInRole("Admin") || User.IsInRole("Employee"))
+{
+    <h4>Przykro nam ale koszyk nie jest dostępny. Proszę zalogować się na konto czytelnika.</h4>
+    <div>
+        <a asp-action="Index">Powrót</a>
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <form asp-action="Place" id="rentalForm">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="form-group">
+                    <label asp-for="PESEL" class="control-label"></label>
+                    <input asp-for="PESEL" class="form-control" />
+                    <span asp-validation-for="PESEL" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Złóż zamówienie" class="btn btn-primary" />
+                </div>
+                <input type="hidden" id="selectedBooksInput" name="selectedBooks" value="">
+            </form>
+        </div>
+    </div>
+
+    <div>
+        <a asp-controller="Home" asp-action="Basket">Cofnij</a>
+    </div>
+
+}
+
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        document.getElementById('rentalForm').addEventListener('submit', function () {
+            var books = JSON.parse(localStorage.getItem("books"));
+            var selectedValues = "";
+
+            for (var book in books) selectedValues += book + "," + books[book] + ";";
+
+            $('#selectedBooksInput').val(selectedValues);
+            modif = 0;
+            localStorage.clear();
+            localStorage.setItem((-1).toString(),
+                JSON.stringify(
+                    {
+                        modif: modif
+                    }));           
+        });
+    </script>
+}

@@ -1,0 +1,73 @@
+﻿@model IEnumerable<Biblioteka.Models.Book>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Książki</h1>
+
+<p>
+    <a asp-action="Create" class="customButton">Dodaj</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Zdjęcie
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.title)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ISBN)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.description)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.releaseDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.stockLevel)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.category)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    <img src=@item.bookPhoto style="width: 120px; height: 155px;" />
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.title)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ISBN)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.description)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.releaseDate)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.stockLevel)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.category.catName)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.bookId" class="customButton">Edytuj</a> |
+                    <a asp-action="Details" asp-route-id="@item.bookId" class="customButton">Detale</a> |
+                    <a asp-action="Delete" asp-route-id="@item.bookId" class="customButton">Usuń</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

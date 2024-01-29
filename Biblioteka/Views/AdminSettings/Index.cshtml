@@ -1,0 +1,48 @@
+﻿@model IEnumerable<Biblioteka.Models.AdminSettings>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.limitTaken)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.limitWaiting)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.limitTimeTaken)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.limitTimeWaiting)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.limitTaken)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.limitWaiting)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.limitTimeTaken)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.limitTimeWaiting)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.adminSettingsId">Edytuj</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

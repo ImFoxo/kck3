@@ -1,0 +1,404 @@
+﻿@model IEnumerable<Biblioteka.Models.Book>
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+@* <script src="js/jquery3.js"></script> *@
+
+<head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+
+    <!-- Selectize CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.15.2/css/selectize.bootstrap2.css">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+    <!-- Selectize JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/js/standalone/selectize.min.js"></script>
+</head>
+
+<div class="text-center">
+    <h1 class="display-4">Witamy</h1>
+
+    <form id="searchForm" action="/Home/Index" method="post">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-4">
+                    <select id="select-to" class="contacts" placeholder="Szukaj..."></select>
+                </div>
+                <div class="col-md-1">
+                    <a href="#" id="Search" class="btn btn-dark" onclick="submitSearchForm()">Szukaj</a>
+                </div>
+                <!-- Ukryte pole do przechowywania wybranych wartości -->
+                <input type="hidden" id="selectedBooksInput" name="selectedBooks" value="">
+            </div>
+        </div>
+    </form>
+
+    @* <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-4">
+                <select id="select-to" class="contacts" placeholder="Szukaj..."></select>
+            </div>
+            <div class="col-md-1">
+                <a href="#" id="Search" class="btn btn-dark">Szukaj</a>
+            </div>
+        </div>
+    </div>
+ *@
+
+
+    <div style="width: 90%; margin: auto;">
+        @foreach (var item in Model)
+        {
+            <div class="okienko">
+                <a href="@Url.Action("Details", "Books", new { id = item.bookId })">
+                    <img src="@item.bookPhoto" alt="Book Photo" />
+                </a><br />
+                @Html.DisplayFor(modelItem => item.title)<br />
+                @Html.DisplayFor(modelItem => item.category.catName)<br />
+                @if(item.authors!=null)
+                {
+                    @foreach (var author in item.authors)
+                    {
+                        <a>@author.name  @author.surname</a>
+                        <br />
+                    }
+                }
+                @if (item.tags != null)
+                {
+                    @foreach (var tag in item.tags)
+                    {
+                        if(tag == item.tags.Last())
+                        {
+                            <a>@tag.tagName</a>
+                        }
+                        else 
+                        {
+                            <a>@tag.tagName, </a>
+                        }                        
+                    }
+                }
+                @* @string.Join(", ", item.authors.Select(rb => rb.name + rb.surname)) *@
+                @if (!User.IsInRole("Admin") && !User.IsInRole("Employee"))
+                {
+                    <button id="toBasket" class="customButton" onclick="addProduct(@item.bookId, @item.stockLevel)">Dodaj do koszyka</button>
+                }
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <a class="nav-link" asp-area="" asp-controller="Books" asp-action="Edit" asp-route-id="@item.bookId">Edytuj</a>
+                    <a class="nav-link" asp-area="" asp-controller="Books" asp-action="Delete" asp-route-id="@item.bookId">Usuń</a>
+                }               
+            </div>
+        }
+    </div>
+</div>
+
+<dialog id="dialog2">
+    <p>Przykro nam, ale danej książki nie ma na stanie.
+        Zaloguj się, żeby zapisać się do kolejki.
+    </p>
+    <form id="form2" method="dialog">
+        <div>
+            <input type="submit" value="OK">
+        </div>
+    </form>
+</dialog>
+
+<dialog id="dialog1">
+    <p>Produkt został dodany do koszyka</p>
+    <form id="form1" method="dialog">
+        <div>
+            <input type="submit" value="OK">
+        </div>
+    </form>
+</dialog>
+
+<dialog id="dialog3">
+    <h2>Produkt jest niedostępny.       
+    </h2>
+    <p>
+        Czy chcesz zapisać się do kolejki?
+    </p>
+    <form id="form3" method="dialog">
+        <div>
+            <input type="submit" value="OK">
+            <input type="reset" value="Anuluj">
+        </div>
+    </form>
+</dialog>
+
+<dialog id="dialog4">
+    <p>
+        Pomyślnie dodano do kolejki.
+    </p>
+    <form id="form4" method="dialog">
+        <div>
+            <input type="submit" value="OK">
+        </div>
+    </form>
+</dialog>
+
+<dialog id="dialog5">
+    <p>
+        Przykro nam ale najpierw musisz oddać wypożyczone książki.
+    </p>
+    <form id="form5" method="dialog">
+        <div>
+            <input type="submit" value="OK">
+        </div>
+    </form>
+</dialog>
+
+@section scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script src="~/lib/bootstrap/dist/js/selectize.js"></script>
+
+    <script type="text/javascript">
+        var $select;
+        var userId = @Html.Raw(Json.Serialize(ViewData["userId"]));
+
+        const form = document.getElementById("form1");
+        const dlg = document.getElementById("dialog1");
+        const form2 = document.getElementById("form2");
+        const dlg2 = document.getElementById("dialog2");
+        const form3 = document.getElementById("form3");
+        const dlg3 = document.getElementById("dialog3");
+        const form4 = document.getElementById("form4");
+        const dlg4 = document.getElementById("dialog4");
+        const form5 = document.getElementById("form5");
+        const dlg5 = document.getElementById("dialog5");
+
+
+        $(document).ready(function () {
+            $select = $('#select-to').selectize({
+                persist: false,
+                maxItems: null,
+                optgroupField: 'title',
+                valueField: 'bookId',
+                labelField: 'title',                
+                searchField: ['title', 'authors', 'isbn', 'releaseDate'],
+                sortField: 'title',
+                onInitialize: function () {
+                    loadBooksAJAX();
+                },
+                onChange: function (value) {
+                    loadBooksAJAX();
+                },
+                render: {
+                    
+                    item: function (item, escape) {
+                        return (
+                            "<div>" +
+                            (item.title ? '<span class="name">' + escape(item.title) + "</span>": "") +
+                            "</div>"
+                        );
+                    },
+                    option: function (item, escape) {
+
+                        var photoHtml = item.bookPhoto ? '<img src="' + escape(item.bookPhoto) + '" alt="' + escape(item.title) + '" class="searchBookImage" />' : '';
+                        var authorsHtml = item.authors ? '<span class="authors">' + escape(item.authors.join(', ')) + '</span>' : '';
+
+
+                        return '<div class="selectDiv">' +
+                            '<span class="mainName">' + photoHtml + '</span>' +
+                            '<span class="subLabel">' + escape(item.title) + '</span>' +
+                            '<span class="subAuthors">' + authorsHtml + '</span>' +
+                            '</div>';
+                    }
+                }              
+            });            
+        });
+
+        function submitSearchForm() {
+            var selectedValues = $select[0].selectize.getValue();
+            console.log(selectedValues);
+
+            // Przypisz wartość do ukrytego pola formularza
+            $('#selectedBooksInput').val(selectedValues);
+
+            console.log(selectedBooksInput.selectedValues);
+
+            // Złóż formularz
+            $('#searchForm').submit();
+        }
+
+        function loadBooksAJAX() {
+            $.ajax({
+                url: '/Home/GetBooks',
+                type: 'POST',
+                success: function (data) {
+                    for (var i = 0; i < data.length; i++) { 
+                        $select[0].selectize.addOption(data[i]);
+                        $select[0].selectize.refreshOptions();}
+                },
+                error: function (response) {
+                    alert('Błąd: ' + response)
+                }
+            });
+        }
+
+        function addProduct(bookId, stockLevel) {
+            console.log("\nuserId " + userId + "\n");
+            if (parseInt(stockLevel) < 1 && userId != null) {
+                form3.reset();
+                dlg3.showModal();
+
+                form3.onsubmit = () => {
+                    var data = {
+                        bookId: parseInt(bookId),
+                        userId: parseInt(userId),
+                        quantity: 1 // Załóżmy, że dodajemy jedną pozycję do kolejki
+                    };
+                    console.log(data);
+                    fetch('/api/Queue', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log(data);
+                            if (data.success) {
+                                dlg3.close();
+                                form4.reset();
+                                dlg4.showModal();
+                            } else {
+                                console.error(data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Fetch Error:', error);
+                        });
+                }
+
+                form3.onreset = () => {
+                    dlg3.close();
+                }
+            }
+            else if(parseInt(stockLevel) < 1 && userId==null)
+            {
+                form2.reset();
+                dlg2.showModal();
+            }
+
+            else {
+                var storedBooks = localStorage.getItem("books");
+                var books = {};
+                if (storedBooks) books = JSON.parse(storedBooks);
+                var sum = 0;
+
+                if (storedBooks) {
+                    Object.keys(books).forEach(function (key) {
+                        sum += books[key];
+                    });
+
+                    console.log("Sum of values:", sum);
+                }
+
+                if (sum >= 6) {
+                    form5.reset();
+                    dlg5.showModal();
+                }
+                else {
+                    if (books[bookId] != null) books[bookId] = books[bookId] + 1;
+                    else books[bookId] = 1;
+
+                    localStorage.setItem("books", JSON.stringify(books));
+
+                    let modif = (localStorage.getItem(-1).modif) + 1;
+                    localStorage.setItem((-1).toString(),
+                        JSON.stringify(
+                            {
+                                modif: modif
+                            }));
+
+                    form.reset();
+                    dlg.showModal();
+                }
+            }
+        }        
+    </script>
+}
+
+
+@section css {
+    <style type="text/css">
+        .selectize-dropdown .active {
+            background-image: unset !important;
+            background-color: var(--secondary-light) !important;
+            color: var(--secondary-content);
+        }
+
+        div.selectDiv {
+            background-color: var(--foreground);
+            border-bottom: 1px solid #e0e0e0;
+            color: #000;
+        }
+
+        .mainName {
+            font-size: 12px;
+        }
+
+        .subLabel {
+            font-size: 10px;
+            font-weight: bolder;
+            padding-left: 10px;
+        }
+
+        .subValue {
+            font-size: 10px;
+        }
+
+        .mainRow {
+        }
+
+        .selectizeFormGroup {
+        }
+
+        .selectize-control.contacts .selectize-input > div .title {
+            opacity: 0.8;
+        }
+
+        .selectize-control.contacts .selectize-input > div .bookPhoto + .title {
+            margin-left: 5px;
+        }
+
+        .selectize-control.contacts .selectize-input > div .title:before {
+            content: "<";
+        }
+
+        .selectize-control.contacts .selectize-input > div .title:after {
+            content: ">";
+        }
+
+        .selectize-control.contacts .selectize-dropdown .caption {
+            font-size: 12px;
+            display: block;
+            color: #a0a0a0;
+        }
+
+        div.selectize-input {
+            background-color: whitesmoke !important;
+            color: #342b08 !important;
+        }
+
+    </style>
+}
+

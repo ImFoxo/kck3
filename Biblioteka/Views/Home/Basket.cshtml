@@ -1,0 +1,421 @@
+﻿@model Biblioteka.Models.Rental
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Koszyk";
+}
+
+<style>
+    table {
+        padding-top: 50px;
+        border-collapse: collapse;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    thead {
+        color: gray;
+        font-weight: bold;
+        padding: 5px;
+        border-bottom: 1px black solid;
+    }
+
+    tr, td, th {
+        padding: 5px;
+        padding-top: 15px;
+        padding-bottom: 15px;
+        text-align: center;
+    }
+
+    th {
+        font-weight: normal;
+    }
+
+    caption {
+        margin-top: 30px;
+        margin-bottom: 50px;
+        border-top: thin black solid;
+        border-bottom: thin black solid;
+        font-weight: bold;
+        padding: 5px;
+        font-size: 30px;
+        color: dimgray;
+        font-weight: normal;
+    }
+
+    tfoot {
+        border-top: 1.5px black solid;
+    }
+</style>
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+    @if (User.IsInRole("Admin") || User.IsInRole("Employee"))
+    {
+        <h4>Przykro nam ale koszyk nie jest dostępny. Proszę zalogować się na konto czytelnika.</h4>
+        <div>
+            <a asp-action="Index">Powrót</a>
+        </div>
+    }
+    else
+    {
+        <div id="out">
+        </div>
+        <br>
+        <br>
+        <br>
+        <button id="but2" style="margin-left: 20 px;" class="customButton" onclick="clearAll()">Opróżnij koszyk</button>
+        <button id="but1" style="margin-left: 20 px;" class="customButton">Złóż zamówienie</button>
+    }
+
+    <dialog id="dialog2">
+        <h4>
+            Czy na pewno chcesz usunąć wszystkie produkty?</h2>
+            <form id="form2" method="dialog">
+                <input type="submit" value="Usuń">
+                <input type="reset" value="Anuluj">
+            </form>
+    </dialog>
+
+    <dialog id="dialog3">
+        <h4>
+            Twój koszyk jest pusty</h2>
+            <form id="form3" method="dialog">
+                <input type="submit" value="OK">          
+            </form>
+    </dialog>
+
+    <dialog id="dialog4">
+        <h2>
+            Usuń produkt</h4>
+            <hr>
+            <p>Czy napewno chcesz usunąć ten produkt z koszyka?</p>
+            <form id="form4">
+                <input type="submit" value="Usuń">
+                <input type="reset" value="Anuluj">
+            </form>
+    </dialog>
+
+    <dialog id="dialog5">
+        <p>Przykro nam, można jednocześnie wypożyczyć max. 6 książek</p>
+        <form id="form5" method="dialog">
+            <div>
+                <input type="submit" value="OK">
+            </div>
+        </form>
+    </dialog>
+    <p id="low"></p>
+</body>
+</html>
+
+<script>
+    var bookList = @Html.Raw(Json.Serialize(ViewData["bookList"]));
+    var limits = @Html.Raw(Json.Serialize(ViewData["limits"]));
+
+    const out = document.getElementById("out");
+
+    const table = document.createElement("TABLE");
+
+    const btn = document.getElementById("but1");
+
+    const form3 = document.getElementById("form3");
+    const dlg3 = document.getElementById("dialog3");
+    const form5 = document.getElementById("form5");
+    const dlg5 = document.getElementById("dialog5");
+
+    btn.onclick = () => {
+        var storedBooks = localStorage.getItem("books");
+
+        if (localStorage.length == 1 || storedBooks == null || storedBooks.length == 2) {
+            //console.log(localStorage.length.toString() + " " + storedBooks);
+            form3.reset();
+            dlg3.showModal();
+        }
+        else window.location.href = "/Rentals/Place";
+    }
+
+    form3.onsubmit = () => {
+        dlg3.close();
+    }
+
+    // form.onsubmit = () => {
+    //     // const mess = document.getElementById("messagedialog");
+    //     // if (form.city.value ==="") {
+    //     //     mess.innerHTML = "Proszę podać miasto";
+    //     //     event.preventDefault();
+    //     //     dlg.showModal();
+    //     // }
+    //     // if (form.street.value === "") {
+    //     //     mess.innerHTML = "Proszę podać ulicę";
+    //     //     event.preventDefault();
+    //     //     dlg.showModal();
+    //     // }
+
+    //     window.location.href = "/Rentals/Place";
+
+    //     //@Url.Action("Create", "Rentals", new { });
+    //     //zapisanie zamówienia do bazy ze sprawdzeniem, czy jest wystarczająco elementów w magazynie
+    //     //dodanie widoku dla płatności tylko po to żeby wyglądała i była strona na kck
+    // }
+
+    // form.onreset = () => {
+    //     const mess = document.getElementById("messagedialog");
+    //     mess.innerHTML = "";
+    //     dlg.close();
+    // }
+
+    let index = localStorage.length - 1;
+    let modif;
+    if (JSON.parse(localStorage.getItem(-1)) != null) {
+        const indexnegative = JSON.parse(localStorage.getItem(-1));
+        modif = indexnegative.modif;
+    }
+    else {
+        modif = 0;
+        localStorage.setItem((-1).toString(),
+            JSON.stringify(
+                {
+                    modif: modif
+                }));
+    }
+    let x = 0;
+
+    table.appendChild(addCaption());
+    table.appendChild(addHeader());
+    table.appendChild(addBody());
+    table.appendChild(addFooter());
+
+    out.appendChild(table);
+
+    const lowermessage = document.getElementById("low");
+
+    const btn2 = document.getElementById("but2");
+    const form2 = document.getElementById("form2");
+    const dlg2 = document.getElementById("dialog2");
+    const form4 = document.getElementById("form4");
+    const dlg4 = document.getElementById("dialog4");
+
+    btn2.onclick = () => {
+        form2.reset();
+        dlg2.showModal();
+    }
+
+    form2.onsubmit = () => {
+        modif = 0;
+        localStorage.clear();
+        localStorage.setItem((-1).toString(),
+            JSON.stringify(
+                {
+                    modif: modif
+                }));
+        location.reload();
+    }
+
+    form2.onreset = () => {
+        dlg2.close();
+    }
+
+    form4.onsubmit = () => {
+        removeProduct();
+
+        modif++;
+        localStorage.setItem((-1).toString(),
+            JSON.stringify(
+                {
+                    modif: modif
+                }));
+    }
+
+    form4.onreset = () => {
+        dlg4.close();
+    }
+
+    function removeProduct() {
+        var storedBooks = localStorage.getItem("books");
+        var books = {};
+
+        if (storedBooks) books = JSON.parse(storedBooks);
+     
+        delete books[x];
+
+        localStorage.setItem("books", JSON.stringify(books));   
+        location.reload();
+    }
+
+    function addCaption() {
+        const caption = document.createElement("CAPTION");
+        let today = new Date();
+        caption.innerHTML = "KOSZYK " + today.getDate() + "-" + (today.getMonth() + 1) + "-" + (today.getFullYear() % 100);
+        return caption;
+    }
+
+    function addHeader() {
+        const thead = document.createElement("THEAD");
+        const headerRow = thead.insertRow();
+        const headers = ["ZDJĘCIE", "NAZWA", "ILOŚĆ"];
+
+        for (let i = 0; i < headers.length; ++i) {
+            let th = document.createElement("TH");
+            if (i == 1) {
+                th.style.textAlign = "left";
+            }
+            if (i == 2) {
+                th.style.textAlign = "right";
+            }
+            th.style.width = "100px";
+            th.innerHTML = headers[i];
+            headerRow.appendChild(th);
+        }
+
+        return thead;
+    }
+
+    function addBody() {
+        const tbody = document.createElement("TBODY");
+
+        var storedBooks = localStorage.getItem("books");
+
+        if (storedBooks) {
+            var books = JSON.parse(storedBooks);
+
+            for (var bookId in books) {
+                if (books.hasOwnProperty(bookId)) {
+                    let obj = new Object();
+                    for (const element of bookList) {
+                        if (element.bookId == bookId) {
+                            obj = element;
+                            break;
+                        }
+                        else;
+                    }
+
+                    var quantity = books[bookId];
+
+                    const headerRow = tbody.insertRow();
+                    let td = document.createElement("TD");
+                    let img = document.createElement("img");
+                    img.src = obj.bookPhoto;
+                    img.style = "width: 85px; height: 120px;" ;
+
+                    td.appendChild(img);
+                    headerRow.appendChild(td);
+
+                    td = document.createElement("TD");
+                    td.style.textAlign = "left";
+                    td.innerHTML = obj.title;                   
+                    headerRow.appendChild(td);
+                    
+                    td = document.createElement("TD"); //ilość
+                    td.style.textAlign = "right";
+
+                    const div =  document.createElement("div");
+                    const but4 = document.createElement("BUTTON");
+                    but4.innerHTML = "+";
+                    but4.id = "ba" + bookId; //ButtonAdd
+                    but4.classList.add("customButton");
+                    but4.onclick = function () {
+                        x = obj.bookId;
+                        var storedBooks = localStorage.getItem("books");
+                        var books = {};
+
+                        if (storedBooks) books = JSON.parse(storedBooks);
+                      
+                        var sum = 0;
+
+                        if (storedBooks) {
+                            Object.keys(books).forEach(function (key) {
+                                sum += books[key];
+                            });
+
+                            console.log("Sum of values:", sum);
+                        }
+
+                        if (sum >= 6) {
+                            form5.reset();
+                            dlg5.showModal();
+                        }
+                        else
+                        {
+                            books[obj.bookId] = books[obj.bookId] + 1;
+                            localStorage.setItem("books", JSON.stringify(books));
+
+                            const indexnegative = JSON.parse(localStorage.getItem(-1));
+                            let modif = indexnegative.modif + 1;
+                            localStorage.setItem((-1).toString(),
+                                JSON.stringify(
+                                    {
+                                        modif: modif
+                                    }));
+                            location.reload();
+                        }                      
+                    };                 
+
+                    const but3 = document.createElement("BUTTON");
+                    but3.innerHTML = "-";
+                    but3.id = "bd" + bookId;
+                    but3.classList.add("customButton");
+                    but3.onclick = function () {
+                        x = obj.bookId;
+                        var storedBooks = localStorage.getItem("books");
+                        var books = {};
+
+                        if (storedBooks) books = JSON.parse(storedBooks);
+                        if (books[obj.bookId] == 1) {
+                            form4.reset();
+                            dlg4.showModal();
+                        }
+                        else {
+                            books[obj.bookId] = books[obj.bookId] - 1;
+                            localStorage.setItem("books", JSON.stringify(books));
+                        
+                            const indexnegative = JSON.parse(localStorage.getItem(-1));
+                            let modif = indexnegative.modif + 1;
+                            localStorage.setItem((-1).toString(),
+                                JSON.stringify(
+                                    {
+                                        modif: modif
+                                    }));
+                            location.reload();
+                            }                        
+                    };
+                    but3.style = but4.style = "margin-top: 15px; margin-left: 5px; margin-right: 5px;";
+
+                    div.innerHTML += quantity;
+                    div.appendChild(but3);                   
+                    div.appendChild(but4);                   
+
+                    td.appendChild(div);
+                    headerRow.appendChild(td);                                                       
+                }
+            }
+        }     
+        return tbody;
+    }
+
+    function addFooter() {
+        const tfoot = document.createElement("TFOOT");
+        const footerRow = tfoot.insertRow();
+        let remainingCell = document.createElement("TH");
+        remainingCell.colSpan = 3;
+        footerRow.appendChild(remainingCell);
+
+        for (let i = 0; i < 2; ++i) {
+            let th = document.createElement("TH");
+            if (i == 0) th.innerHTML = "CZAS WYPOŻYCZENIA";
+            else {
+                //console.log(limits);
+                if (limits[0].limitTimeTaken <= 4) th.innerHTML = limits[0].limitTimeTaken + " tygodnie";
+                else if (limits[0].limitTimeTaken == 1) th.innerHTML = limits[0].limitTimeTaken + " tygodnień";
+                else th.innerHTML = limits[0].limitTimeTaken + " tygodni";             
+            }
+            footerRow.appendChild(th);
+        }
+
+        return tfoot;
+    }
+</script>

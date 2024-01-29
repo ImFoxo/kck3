@@ -1,0 +1,75 @@
+﻿@model IEnumerable<Biblioteka.Models.Rental>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Wypożyczenia</h1>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.rentalDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.rentalState)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.stateDate)
+            </th>
+            @if (User.IsInRole("Admin") || User.IsInRole("Employee"))
+            {
+                 <th>
+                     @Html.DisplayNameFor(model => model.PESEL)
+                 </th>
+                 <th>
+                     @Html.DisplayNameFor(model => model.user)
+                 </th>
+            }
+            <th>
+                @Html.DisplayNameFor(model => model.RentalBook)
+            </th>      
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.rentalDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.rentalState)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.stateDate)
+            </td>
+            @if (User.IsInRole("Admin") || User.IsInRole("Employee"))
+            {
+                <td>
+                    @Html.DisplayFor(modelItem => item.PESEL)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.user.email)
+                </td>
+            }
+            <td>
+                    @string.Join(", ", item.RentalBook.Select(rb => rb.book.title))
+            </td>
+            <td>
+                 @if (User.IsInRole("Admin") || User.IsInRole("Employee"))
+                 {
+                        <a asp-action="Edit" asp-route-id="@item.rentalId" class="customButton">Edytuj</a>                    
+                 }
+                <a asp-action="Details" asp-route-id="@item.rentalId" class="customButton">Detale</a>
+                @if (User.IsInRole("Admin") || User.IsInRole("Employee"))
+                {
+                    <a asp-action="Delete" asp-route-id="@item.rentalId" class="customButton">Usuń</a>
+                }                   
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

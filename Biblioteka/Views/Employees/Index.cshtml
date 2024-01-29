@@ -1,0 +1,89 @@
+﻿@model IEnumerable<Biblioteka.Models.Employee>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Pracownicy</h1>
+
+<p>
+    <a asp-action="Create" class="customButton">Dodaj</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.surname)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.email)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.birthDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.pesel)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.street)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.houseNumber)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.town)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.zipCode)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.dateOfEmployment)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.surname)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.email)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.birthDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.pesel)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.street)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.houseNumber)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.town)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.zipCode)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.dateOfEmployment)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.id" class="customButton">Edytuj</a> |
+                <a asp-action="Details" asp-route-id="@item.id" class="customButton">Detale</a> |
+                <a asp-action="Delete" asp-route-id="@item.id" class="customButton">Usuń</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
